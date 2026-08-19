@@ -1,0 +1,23 @@
+catalog: "mii_workspace"
+schemas: "default"
+tables:
+  gold_dq_profiling:
+    silver_table: "silver_customer"     
+    gold_table_summary: "gold_dq_profiling_summary" 
+    gold_table_detail: "gold_dq_profiling_detail"
+# table_summary: "gold_dq_profiling_summary"
+# table_detail: "gold_dq_profiling_detail"
+
+dq_rules:
+  - table_name: "silver_customer"
+    primary_key: "CFCIF#"
+    rule_name: "gender_nik_consistency"
+    rule_category: "consistency"
+    column_name: "CFSSNO"
+    checked_column: ["CFSSNO","CFSEX"]
+    severity: "WARNING"
+    type: "gender_nik_check"
+    params:
+      ssno_column: CFSSNO
+      sex_column: CFSEX
+  
