@@ -53,8 +53,10 @@ Penyesuaian yang **wajib**:
 ### Step 4 — Siapkan Transform Function
 
 Pastikan `utils/transform/sdp_silver_transform.py` sudah ada di folder `utils/`. Kalau folder baru dibuat, copy dari project/tabel existing — jangan ditulis ulang.
-
-Kalau tabel baru butuh **transformasi khusus** (join, business logic kompleks, dsb yang tidak bisa dinyatakan lewat `mapping`/`special_char`/`numeric_only` di YAML), buat file terpisah di `utils/transform/custom_transforms/{nama_table}.py` — lihat pola *custom transform* di dokumentasi terpisah.
+Isi sdp_silver_transform : 
+- Rename Nama Kolom
+- Casting Tipe Data
+- Trimming
 
 ### Step 5 — Pipeline Silver
 
