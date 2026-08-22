@@ -6,27 +6,55 @@ schemas:
 
 tables:
   customer:
-    # source: "customer"
     bronze_table: "bronze_customer"     
     silver_table: "silver_customer"     
 
     bronze:
-      source_table: "customer"      
+      source_table: "customer"
+      source_type: "s3"    
       primary_keys:
         - "CFCIF#"
       partition_column: "CFCIF_NUM"       
       num_partitions: 8
       partition_by_col: "ingested_date"  
 
+      ## Config Postgres AWS (ubah source type di bronze diatas menjadi postgre)
+      # postgres:  
+      #   host: ""
+      #   port: 
+      #   database: ""
+      #   schema: ""
+      #   table: ""
+      #   driver: "org.postgresql.Driver"
+      #   # Credential
+      #   secret_scope: ""
+      #   secret_key_user: ""
+      #   secret_key_password: ""
+      #   ssl_mode: "require"
+
+      #   read_options:
+      #     fetchsize: "10000"
+      #     partitionColumn: ""
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"
+
+
+      ## Config S3
+      s3:
+        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfmast/"
+        format: "csv"
+        schema_location: ""
+        read_options:
+          header: "true"
+          delimiter: ","
+          cloudFiles.inferColumnTypes: "true"
+
     silver:
       primary_keys:
         - "CFCIF"
-        # - "entitas"
-        # - "tahun"
-        # - "bulan"
       partition_columns:
         - "CFVDT6"
-        # - "bulan"
       deduplicate: false
       incremental_columns: []
         # - "ingested_at"
