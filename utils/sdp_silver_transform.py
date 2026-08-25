@@ -5,6 +5,10 @@ _TYPE_MAP = {
     "string": T.StringType(),
     "integer": T.IntegerType(),
     "timestamp": T.TimestampType(),
+    "long": T.LongType(),
+    "boolean": T.BooleanType(),
+    "double": T.DoubleType(),
+    "date": T.DateType()
 }
 
 

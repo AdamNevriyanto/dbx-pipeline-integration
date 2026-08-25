@@ -13,51 +13,27 @@ tables:
       source_table: "customer"
       source_type: "s3"    
       primary_keys:
-        - "CFCIF#"
-      partition_column: "CFCIF_NUM"       
+        - "CFCIF#"      
       num_partitions: 8
-      partition_by_col: "ingested_date"  
-
-      ## Config Postgres AWS (ubah source type di bronze diatas menjadi postgre)
-      # postgres:  
-      #   host: ""
-      #   port: 
-      #   database: ""
-      #   schema: ""
-      #   table: ""
-      #   driver: "org.postgresql.Driver"
-      #   # Credential
-      #   secret_scope: ""
-      #   secret_key_user: ""
-      #   secret_key_password: ""
-      #   ssl_mode: "require"
-
-      #   read_options:
-      #     fetchsize: "10000"
-      #     partitionColumn: ""
-      #     lowerBound: "1"
-      #     upperBound: "1000000"
-      #     numPartitions: "8"
-
+      cluster_by_col: "CFVDT6"  
 
       ## Config S3
       s3:
         s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfmast/"
-        format: "csv"
-        schema_location: ""
         read_options:
+          cloudFiles.format: "csv"
           header: "true"
           delimiter: ","
           cloudFiles.inferColumnTypes: "true"
+          cloudFiles.schemaEvolutionMode: "addNewColumns"
+          cloudFiles.schemaHints: "`CFCIF#` STRING, CFSSNO STRING"
 
     silver:
       primary_keys:
         - "CFCIF"
-      partition_columns:
-        - "CFVDT6"
-      deduplicate: false
+      partition_columns: "CFVDT6"
+      # deduplicate: false
       incremental_columns: []
-        # - "ingested_at"
 
     columns:
       - name: CFRECI
