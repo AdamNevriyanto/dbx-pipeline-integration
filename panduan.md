@@ -26,12 +26,13 @@ dbx-pipeline-integration/
 **2a. Buat file `configs/table_{nama_table}.yaml`**
 
 Sesuaikan minimal bagian berikut:
+- `bronze.cluster_by_col` →  kolom untuk struktur clustering.
 - `bronze.s3.s3_path` → path S3 source
-- `bronze.s3.format` → format file source (csv/json/parquet)
-- `bronze.s3.schema_location` → path S3 untuk menyimpan history schema jika ada Schema Evolution
+- `bronze.s3.read_options.cloudFiles.format` → format file source (csv/json/parquet)
+- `bronze.s3.read_options.cloudFiles.schemaHints` →  kolom kolom yang secara tipe data dipaksa untuk disesuaikan dengan tipe data yang sudah di define dan tidak berubah jika source ada perubahan schema.
 - `columns` → nama kolom, tipe data, dan cleansing rule tiap kolom (rename, trim, mapping, dll — lihat contoh tabel existing sebagai referensi)
 - `silver.primary_keys` → kolom PK untuk MERGE/`apply_changes`
-- `silver.partition_columns` → kolom untuk physical partitioning Delta table
+- `silver.partition_columns` → kolom untuk struktur clustering.
 - `silver.incremental_columns` → kolom untuk komparasi data terbaru di Silver
 
 
