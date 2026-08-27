@@ -87,20 +87,22 @@ Clone script **TEMPLATE_PIPELINE.py** dari tabel yang sudah ada, simpan sebagai 
 - `TABLE_NAME` : Harus **identik** dengan `{nama_table}` di file YAML (case-sensitive)
 
 **4.2** Penyesuaian jika **Source dari S3 :**
+
 Gunakan Blok ini : 
-|| def bronze_customer():
+def bronze_customer():
     ## load data dari S3
     df_raw = (
         spark.readStream.format("cloudFiles")
         .options(**source_cfg["read_options"])
         .load(source_cfg["s3_path"])
     )
-||
+
 - `.withColumn("source_file", F.col("_metadata.file_path"))` : Gunakan metadata ini untuk tulis file path source S3  
 
 **4.3** Penyesuaian jika **Source dari JDBC :**
+
 Gunakan Blok ini :
-||  # load data dari jdbc
+# load data dari jdbc
     jdbc_cfg = source_cfg["read_options"]
     df_raw = (
       spark.read
@@ -108,7 +110,7 @@ Gunakan Blok ini :
       .options(**get_jdbc_options(jdbc_cfg))
       .load()
     )   
-||
+
 - `.withColumn("source_file", F.lit(jdbc_cfg["table"]))` : Gunakan metadata ini untuk tulis nama table source  
 
 
