@@ -11,11 +11,30 @@ tables:
 
     bronze:
       source_table: "customer"
-      source_type: "s3"    
+      source_type: "s3"
       primary_keys:
         - "CFCIF#"      
-      num_partitions: 8
-      cluster_by_col: "CFVDT6"  
+      cluster_by_col: "CFVDT6"
+
+      ## Config untuk JDBC (PASTIKAN SEMUA VALUENYA BERUPA STRING dengan "")
+      # jdbc:
+      #   read_options: 
+      #     host: "dbx-sandbox-db.cl2c6ukwkfxn.ap-southeast-3.rds.amazonaws.com"
+      #     port: "5432"
+      #     database: "postgres"
+      #     # schema: ""
+      #     table: "cfmast"
+      #     driver: "org.postgresql.Driver"
+      #     secret_scope: "jdbc-scope-jeremi"
+      #     secret_key_user: "db-username"
+      #     secret_key_password: "db-password"
+      #     ssl_mode: "require"
+      # # OPTIONAL PARAMETER
+      #     fetchsize: "10000"
+      #     partitionColumn: "CFCIF"
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"      
 
       ## Config S3
       s3:
@@ -32,8 +51,7 @@ tables:
       primary_keys:
         - "CFCIF"
       partition_columns: "CFVDT6"
-      # deduplicate: false
-      incremental_columns: []
+      incremental_columns: [CFVDT6]
 
     columns:
       - name: CFRECI
@@ -41,7 +59,7 @@ tables:
         type: string
         cleansing:
           trim: true
-          null_markers: ["", "NULL"]
+          null_markers: [""]
       - name: CFRETN
         source: CFRETN
         type: integer
@@ -162,13 +180,6 @@ tables:
         type: string
         cleansing:
           trim: true
-          special_char:
-            lookup_column: CFCLAS
-            rules:
-              - values: ["A","B"]
-                allowed_char: [",", ".", "'"]
-              - default: true
-                allowed_char: [".", ",", "'", "-", "_", "/", "\\", "*", "&", "|"]
       - name: CFNA1A
         source: CFNA1A
         type: string
@@ -204,14 +215,6 @@ tables:
         type: string
         cleansing:
           trim: true
-          mapping: 
-            "001": "Islam"
-            "002": "Kristen Protestan"
-            "003": "Kristen Katholik"
-            "004": "Hindu"
-            "005": "Budha"
-            "006": "Lainnya"
-            default: None
       - name: CFNAMC
         source: CFNAMC
         type: string
@@ -252,9 +255,6 @@ tables:
         type: string
         cleansing:
           trim: true
-          numeric_only:
-            lookup_column: CFSSCD
-            values: ["KT", "NP"]
       - name: CFSSCD
         source: CFSSCD
         type: string
@@ -280,10 +280,6 @@ tables:
         type: string
         cleansing:
           trim: true
-          mapping: 
-            M: "L"
-            F: "P"
-            default: None
       - name: CFCLAS
         source: CFCLAS
         type: string
@@ -359,15 +355,6 @@ tables:
         type: string
         cleansing:
           trim: true
-          mapping: 
-            A: "Kawin"
-            B: "Belum Kawin"
-            C: "Janda"
-            D: "Duda"
-            E: "Lainnya"
-            F: "Cerai Hidup"
-            G: "Cerai Mati"
-            default: None
       - name: CFUIC3
         source: CFUIC3
         type: string
@@ -443,21 +430,11 @@ tables:
         type: string
         cleansing:
           trim: true
-          special_char:
-            lookup_column: CFCLAS
-            rules:
-              - values: ["A","B"]
-                allowed_char: [",", ".", "'"]
       - name: CFYTIA
         source: CFYTIA
         type: string
         cleansing:
           trim: true
-          special_char:
-            lookup_column: CFCLAS
-            rules:
-              - values: ["A","B"]
-                allowed_char: [",", ".", "'"]
       - name: CFDRAC
         source: CFDRAC
         type: integer
@@ -488,39 +465,9 @@ tables:
         type: integer
         cleansing:
           trim: true
-    derived_columns:
-      - name: CFVTIMESTAMP
-        type: timestamp
-        combine:
-          date_column: CFVDT6
-          date_format: "ddMMyy"      # DDMMYY
-          time_column: CFVTME
-          time_format: "HHmmss" 
-
-    dq_rules:
-      - rule_name: "consistency_nik"
-        rule_category: "consistency"
-        column_name: "CFSSNO"
-        severity: "WARNING"
-        type: "gender_nik_check"
-        params:
-          ssno_column: CFSSNO
-          sex_column: CFSEX
-
-    cleansing:
-      columns:
-        - name: "nilai"
-          null_markers:
-            - "0E-8"
-            - "-"
-            - ""
-            - "null"
-            - "NULL"
-        # - name: "cr"
-        #   null_markers:
-        #     - "0E-8"
-        #     - "-"
-        #     - ""
-        #     - "null"
-        #     - "NULL"
+      - name: CFVDT6
+        source: CFVDT6
+        type: integer
+        cleansing:
+          trim: true
       
