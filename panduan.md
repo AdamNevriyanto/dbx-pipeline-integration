@@ -26,6 +26,7 @@ dbx-pipeline-integration/
 **2a. Buat file `configs/table_{nama_table}.yaml`**
 
 **KONFIGURASI GENERAL YANG PERLU DISESUAIKAN :**
+- `tables` → sesuaikan dengan nama table apa yang mau diingest dan pastikan sama dengan di script SDP {TABLE_NAME}
 - `bronze.cluster_by_col` →  kolom untuk struktur clustering.
 - `columns` → nama kolom, tipe data, dan cleansing rule tiap kolom (rename, trim, mapping, dll — lihat contoh tabel existing sebagai referensi)
 - `silver.primary_keys` → kolom PK untuk MERGE/`apply_changes`
@@ -88,7 +89,8 @@ Clone script **TEMPLATE_PIPELINE.py** dari tabel yang sudah ada, simpan sebagai 
 
 **4.2** Penyesuaian jika **Source dari S3 :**
 
-Gunakan Blok ini : 
+Gunakan Blok ini :
+# Load Data dari S3
 def bronze_customer():
     ## load data dari S3
     df_raw = (
@@ -102,7 +104,7 @@ def bronze_customer():
 **4.3** Penyesuaian jika **Source dari JDBC :**
 
 Gunakan Blok ini :
-# load data dari jdbc
+# Load Data dari jdbc
     jdbc_cfg = source_cfg["read_options"]
     df_raw = (
       spark.read
