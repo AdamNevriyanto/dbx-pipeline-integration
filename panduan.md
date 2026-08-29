@@ -91,8 +91,7 @@ Clone script **TEMPLATE_PIPELINE.py** dari tabel yang sudah ada, simpan sebagai 
 
 Gunakan Blok ini :
 # Load Data dari S3
-def bronze_customer():
-    ## load data dari S3
+    def bronze_customer():
     df_raw = (
         spark.readStream.format("cloudFiles")
         .options(**source_cfg["read_options"])
