@@ -6,11 +6,8 @@ schemas:
 
 tables:
   customer:
-    bronze_table: "bronze_customer"     
-    silver_table: "silver_customer"     
-
     bronze:
-      source_table: "customer"
+      source_table: "cfmast"
       source_type: "s3"
       primary_keys:
         - "CFCIF#"      

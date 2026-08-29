@@ -18,7 +18,7 @@ source_cfg = bronze_cfg[source_type]
 #####################################
 
 @dlt.table(
-    name=f"bronze_{source_type}_{TABLE_NAME}",
+    name=f"bronze_{source_type}_{bronze_cfg['source_table']}",
     cluster_by= [bronze_cfg["cluster_by_col"]] if bronze_cfg.get("cluster_by_col") else None,
     table_properties={
     "delta.dataSkippingStatsColumns": bronze_cfg.get("cluster_by_col")
@@ -60,7 +60,7 @@ def bronze_customer():
 ## FILTER PK tidak boleh NULL untuk kebutuhan merging di akhir.
 @dlt.expect_all_or_drop({f"valid_{pk}": f"`{pk}` IS NOT NULL" for pk in silver_cfg["primary_keys"]})
 def staged():
-    df_bronze = dlt.read_stream(f"bronze_{source_type}_{TABLE_NAME}")
+    df_bronze = dlt.read_stream(f"bronze_{source_type}_{bronze_cfg['source_table']}")
     return transform(df_bronze, table_cfg)
 
 
