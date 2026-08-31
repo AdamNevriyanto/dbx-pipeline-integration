@@ -5,7 +5,7 @@ sys.path.insert(0, "/Workspace/Users/joshua.purwadi@metrodata.co.id/dbx-pipeline
 from utils.config_load import load_table_config #, get_jdbc_options (UNCOMMENT jika menggunakan source dari JDBC)
 from utils.sdp_silver_transform import transform
 
-TABLE_NAME = "customer"
+TABLE_NAME = "address"
 config = load_table_config(TABLE_NAME)
 table_cfg = config["tables"][TABLE_NAME]
 bronze_cfg = table_cfg["bronze"]
@@ -36,10 +36,10 @@ def bronze_customer():
     ## load data dari jdbc
     # jdbc_cfg = source_cfg["read_options"]
     # df_raw = (
-        # spark.read
-        # .format("jdbc")
-        # .options(**get_jdbc_options(jdbc_cfg))
-        # .load()
+    # spark.read
+    # .format("jdbc")
+    # .options(**get_jdbc_options(jdbc_cfg))
+    # .load()
     # )       
 
     return (
@@ -47,7 +47,7 @@ def bronze_customer():
         .withColumn("ingested_timestamp", F.current_timestamp())
         .withColumn("ingested_date", F.current_date())
         .withColumn("source_file", F.col("_metadata.file_path"))
-        ## .withColumn("source_file", F.lit(jdbc_cfg["table"])) ## Pakai Source ini untuk Source dengan nama tablenya
+       ## .withColumn("source_file", F.lit(jdbc_cfg["table"])) ## Pakai Source ini untuk Source dengan nama tablenya
     )
 
 #####################################

@@ -1,6 +1,6 @@
 import yaml
 
-path = "/Workspace/Users/jeremi.santoso@metrodata.co.id/dbx-pipeline-integration"
+path = "/Workspace/Users/joshua.purwadi@metrodata.co.id/dbx-pipeline-integration"
 
 def get_table_config_path(table_name: str) -> str:
     return f"{path}/config/table_{table_name}.yaml"
