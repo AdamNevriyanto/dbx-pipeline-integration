@@ -1,31 +1,29 @@
 bundle:
   name: dbx-pipeline-integration
 
+include:
+  - resources/*.yml
+
 targets:
-  dev:
+  personal:
     mode: development
     default: true
     workspace:
-      host: https://dbc-fba03bad-86dd.cloud.databricks.com/
-      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
-    variables:
-      catalog: mii_workspace
-      schema: default
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
 
-resources:
-  pipelines:
-    cfmast_pipeline_dev:
-      name: cfmast-pipeline-dev-${workspace.current_user.short_name}
-      catalog: ${var.catalog}
-      schema: ${var.schema}
-      libraries:
-        - notebook:
-            path: ./pipelines/dummy_sdp_pipeline/transformations/pipeline_btn_development/cfmast_pipeline.py
+  dev:
+    mode: production          
+    git:
+      branch: dev       
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+      root_path: /Workspace/045f23e4-04e6-470e-a253-4aea5a2846c4/.bundle/dbx-pipeline-integration/dev
 
-    cfaddr_pipeline_dev:
-      name: cfaddr-pipeline-dev-${workspace.current_user.short_name}
-      catalog: ${var.catalog}
-      schema: ${var.schema}
-      libraries:
-        - notebook:
-            path: ./pipelines/dummy_sdp_pipeline/transformations/pipeline_btn_development/cfaddr_pipeline.py
+  prod:
+    mode: production
+    git:
+      branch: main
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+    run_as:
+      service_principal_name: 045f23e4-04e6-470e-a253-4aea5a2846c4
