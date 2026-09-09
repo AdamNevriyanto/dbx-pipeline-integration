@@ -1,7 +1,7 @@
 import dlt
 import sys
 from pyspark.sql import functions as F
-sys.path.insert(0, "/Workspace/Users/joshua.purwadi@metrodata.co.id/dbx-pipeline-integration")
+sys.path.insert(0, "/Workspace/Users/jeremi.santoso@metrodata.co.id/dbx-pipeline-integration")
 from utils.config_load import load_table_config #, get_jdbc_options (UNCOMMENT jika menggunakan source dari JDBC)
 from utils.sdp_silver_transform import transform
 
