@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+    "RUF",
+    "DTZ",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"jobs/**/*.ipynb" = ["F821"]
+"pipelines/dummy_sdp_pipeline/transformations/dlt_pipeline.py" = ["F821"]
