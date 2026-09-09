@@ -1,12 +1,13 @@
 import yaml
 
-path = "/Workspace/Users/jeremi.santoso@metrodata.co.id/dbx-pipeline-integration"
+# path = "/Workspace/Users/jeremi.santoso@metrodata.co.id/dbx-pipeline-integration"
 
-# PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
 
 def get_table_config_path(table_name: str) -> str:
-    return f"{path}/config/table_{table_name}.yaml"
+    # return f"{path}/config/table_{table_name}.yaml"
+    return os.path.join(CONFIG_DIR, f"table_{table_name}.yaml")
 
 def load_config(path: str) -> dict:
     with open(path, "r") as f:
