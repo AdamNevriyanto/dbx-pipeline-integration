@@ -1,7 +1,7 @@
 import yaml
 
 # path = "/Workspace/Users/jeremi.santoso@metrodata.co.id/dbx-pipeline-integration"
-
+## sekarang pake yang ini ya
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_DIR = os.path.join(PROJECT_ROOT, "config")
 
