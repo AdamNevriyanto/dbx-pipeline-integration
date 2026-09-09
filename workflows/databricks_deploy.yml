@@ -39,9 +39,8 @@ jobs:
     env:
       DATABRICKS_HOST: https://dbc-fba03bad-86dd.cloud.databricks.com/
       # Use the Production Service Principal (ID: 045f23e4-...) credentials here
-      DATABRICKS_CLIENT_ID: ${{ secrets.PROD_SP_CLIENT_ID }}
-      DATABRICKS_CLIENT_SECRET: ${{ secrets.PROD_SP_CLIENT_SECRET }}
-    steps:
+      DATABRICKS_CLIENT_ID: 045f23e4-04e6-470e-a253-4aea5a2846c4
+      DATABRICKS_CLIENT_SECRET: dose02cc1a5e0c899c0ced50fea54000b240
       - name: Checkout code
         uses: actions/checkout@v4
 
