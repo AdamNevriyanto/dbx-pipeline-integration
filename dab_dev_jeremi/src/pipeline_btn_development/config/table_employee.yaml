@@ -1,0 +1,192 @@
+catalog: "mii_workspace"
+
+schemas:
+  bronze: "default"
+  silver: "default"
+
+tables:
+  employee:
+    bronze_table: "bronze_customer"     
+    silver_table: "silver_customer"     
+
+    bronze:
+      source_table: "employee"
+      source_type: "s3"    
+      primary_keys:
+        - "CFCIF#"
+      partition_column: "CFCIF_NUM"       
+      num_partitions: 8
+      partition_by_col: "ingested_date"  
+
+      ## Config Postgres AWS (ubah source type di bronze diatas menjadi postgre)
+      # postgres:  
+      #   host: ""
+      #   port: 
+      #   database: ""
+      #   schema: ""
+      #   table: ""
+      #   driver: "org.postgresql.Driver"
+      #   # Credential
+      #   secret_scope: ""
+      #   secret_key_user: ""
+      #   secret_key_password: ""
+      #   ssl_mode: "require"
+
+      #   read_options:
+      #     fetchsize: "10000"
+      #     partitionColumn: ""
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"
+
+
+      ## Config S3
+      s3:
+        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfzemp/"
+        format: "csv"
+        schema_location: ""
+        read_options:
+          header: "true"
+          delimiter: ","
+          cloudFiles.inferColumnTypes: "true"
+
+    silver:
+      primary_keys:
+        - "CFCIF"
+      partition_columns:
+        - "CFEDR6"
+      deduplicate: false
+      incremental_columns: []
+        # - "ingested_at"
+
+    columns:
+      - name: CFCIF#
+        source: CFCIF#
+        type: string
+        cleansing:
+          trim: true
+      - name: CFENA1
+        source: CFENA1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFESD7
+        source: CFESD7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFESD6
+        source: CFESD6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEED7
+        source: CFEED7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEED6
+        source: CFEED6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFENIN
+        source: CFENIN
+        type: string
+        cleansing:
+          trim: true
+      - name: CFESA1
+        source: CFESA1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFESA2
+        source: CFESA2
+        type: string
+        cleansing:
+          trim: true
+      - name: CFECUR
+        source: CFECUR
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEPRV
+        source: CFEPRV
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFERM1
+        source: CFERM1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFERM2
+        source: CFERM2
+        type: string
+        cleansing:
+          trim: true
+      - name: CFERM3
+        source: CFERM3
+        type: string
+        cleansing:
+          trim: true
+      - name: CFERM4
+        source: CFERM4
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEJCD
+        source: CFEJCD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFOCCD
+        source: CFOCCD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEDI7
+        source: CFEDI7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEDI6
+        source: CFEDI6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEDR7
+        source: CFEDR7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFEDR6
+        source: CFEDR6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFCURR
+        source: CFCURR
+        type: string
+        cleansing:
+          trim: true
+
+      
+
+    cleansing:
+      columns:
+        - name: "nilai"
+          null_markers:
+            - "0E-8"
+            - "-"
+            - ""
+            - "null"
+            - "NULL"
+        # - name: "cr"
+        #   null_markers:
+        #     - "0E-8"
+        #     - "-"
+        #     - ""
+        #     - "null"
+        #     - "NULL"
+      
