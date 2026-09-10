@@ -1,0 +1,30 @@
+# Declarative Automation Bundle configuration, more info here: https://docs.databricks.com/en/dev-tools/bundles/settings.html
+bundle:
+  name: "dab_pipeline_btn_development"
+
+include:
+  - resources/*.yml
+  - resources/*/*.yml
+
+targets:
+  ## isolasi deploy ke pipeline personal untuk testing
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+
+  staging:
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+      root_path: /Users/045f23e4-04e6-470e-a253-4aea5a2846c4/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: 045f23e4-04e6-470e-a253-4aea5a2846c4
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+      root_path: /Users/045f23e4-04e6-470e-a253-4aea5a2846c4/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: 045f23e4-04e6-470e-a253-4aea5a2846c4

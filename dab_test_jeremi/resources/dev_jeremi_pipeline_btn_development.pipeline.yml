@@ -1,0 +1,11 @@
+resources:
+  pipelines:
+    pipeline_btn_development:
+      name: pipeline_btn_development
+      libraries:
+        - glob:
+            include: ../src/dev_jeremi_pipeline_btn_development/transformations/**
+      serverless: true
+      catalog: mii_workspace
+      schema: default
+      root_path: ../src/dev_jeremi_pipeline_btn_development
