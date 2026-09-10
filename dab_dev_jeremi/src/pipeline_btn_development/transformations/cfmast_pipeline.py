@@ -65,7 +65,7 @@ def staged():
 
 
 dlt.create_streaming_table(
-    name=f"silver_{source_type}_customer_jeremi",
+    name=f"silver_{source_type}_{TABLE_NAME}",
     cluster_by=[silver_cfg["partition_columns"]] if silver_cfg.get("partition_columns") else None,
     table_properties={
     "delta.dataSkippingStatsColumns": silver_cfg.get("partition_columns")
@@ -82,7 +82,7 @@ else:
     sequence_by = F.col("ingested_timestamp")
 
 dlt.apply_changes(
-    target=f"silver_{source_type}_customer_jeremi",
+    target=f"silver_{source_type}_{TABLE_NAME}",
     source=f"silver_{TABLE_NAME}_staging",
     keys=silver_cfg["primary_keys"],
     sequence_by=sequence_by,
