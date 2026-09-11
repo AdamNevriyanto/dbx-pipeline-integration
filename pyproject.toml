@@ -1,3 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbx-pipeline-integration"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML>=6.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["utils*"]
+
 [tool.ruff]
 line-length = 88
 
