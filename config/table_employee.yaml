@@ -1,67 +1,76 @@
-catalog: "mii_workspace"
-
-schemas:
-  bronze: "default"
-  silver: "default"
+# ============================================================
+# config/table_employee.yaml — TABLE DEFINITION ONLY
+#
+# DESIGN PRINCIPLE:
+#   This file answers: "What does my table look like?"
+#     - Column names, types, cleansing rules
+#     - Primary keys, clustering columns
+#     - Source system table name
+#     - File format / parse options (csv, delimiter, etc.)
+#
+#   This file does NOT answer: "Where does the data live?"
+#     - catalog       → spark.conf.get("pipeline.catalog")
+#     - schema        → spark.conf.get("pipeline.schema")
+#     - S3 bucket     → spark.conf.get("pipeline.s3_bucket")
+#     - source_type   → spark.conf.get("pipeline.source_type")
+#     - JDBC host/port → spark.conf.get("pipeline.jdbc_host") etc.
+#
+#   All "where" values are set in databricks.yml → pipeline
+#   resource configuration → spark.conf. Changing environment
+#   (dev→prod) means changing the DAB target, NOT editing
+#   this file.
+# ============================================================
 
 tables:
   employee:
-    bronze_table: "bronze_customer"     
-    silver_table: "silver_customer"     
 
     bronze:
-      source_table: "employee"
-      source_type: "s3"    
+      source_table: "cfzemp"         # actual source table/folder name
       primary_keys:
         - "CFCIF#"
-      partition_column: "CFCIF_NUM"       
-      num_partitions: 8
-      partition_by_col: "ingested_date"  
+      cluster_by_col: "CFEDR6"       # Delta data skipping on date column
 
-      ## Config Postgres AWS (ubah source type di bronze diatas menjadi postgre)
-      # postgres:  
-      #   host: ""
-      #   port: 
-      #   database: ""
-      #   schema: ""
-      #   table: ""
-      #   driver: "org.postgresql.Driver"
-      #   # Credential
-      #   secret_scope: ""
-      #   secret_key_user: ""
-      #   secret_key_password: ""
-      #   ssl_mode: "require"
+      # ---------------------------------------------------------
+      # READ OPTIONS — how to PARSE the source file
+      # These describe the file format, not the infrastructure.
+      # They stay in this YAML because they're a property of
+      # the data itself (employee data = CSV, comma-delimited).
+      # ---------------------------------------------------------
+      read_options:
+        cloudFiles.format: "csv"
+        header: "true"
+        delimiter: ","
+        cloudFiles.inferColumnTypes: "true"
+        cloudFiles.schemaEvolutionMode: "addNewColumns"
+        cloudFiles.schemaHints: "`CFCIF#` STRING"
 
-      #   read_options:
-      #     fetchsize: "10000"
-      #     partitionColumn: ""
-      #     lowerBound: "1"
-      #     upperBound: "1000000"
-      #     numPartitions: "8"
-
-
-      ## Config S3
-      s3:
-        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfzemp/"
-        format: "csv"
-        schema_location: ""
-        read_options:
-          header: "true"
-          delimiter: ","
-          cloudFiles.inferColumnTypes: "true"
+      # ---------------------------------------------------------
+      # OPTION B — source_type in YAML (alternative)
+      #
+      # Use this when a table is PERMANENTLY tied to one source
+      # regardless of environment (e.g. vendor always sends CSV
+      # to S3, or table is always read from a specific DB).
+      #
+      # source_type: "s3"    # or "jdbc"
+      #
+      # Pipeline code would then do:
+      #   source_type = bronze_cfg.get(
+      #       "source_type",
+      #       spark.conf.get("pipeline.source_type", "s3")
+      #   )
+      # YAML value wins if present, otherwise falls back to
+      # the DAB variable. Best of both worlds.
+      # ---------------------------------------------------------
 
     silver:
       primary_keys:
-        - "CFCIF"
-      partition_columns:
-        - "CFEDR6"
-      deduplicate: false
-      incremental_columns: []
-        # - "ingested_at"
+        - "CFCIF"                    # matches the RENAMED column below
+      partition_columns: "CFEDR6"
+      incremental_columns: [CFEDR6]  # used for SCD1 sequence ordering
 
     columns:
-      - name: CFCIF#
-        source: CFCIF#
+      - name: CFCIF                  # RENAMED: source "CFCIF#" → "CFCIF"
+        source: "CFCIF#"             # must match silver primary_key
         type: string
         cleansing:
           trim: true
@@ -170,23 +179,3 @@ tables:
         type: string
         cleansing:
           trim: true
-
-      
-
-    cleansing:
-      columns:
-        - name: "nilai"
-          null_markers:
-            - "0E-8"
-            - "-"
-            - ""
-            - "null"
-            - "NULL"
-        # - name: "cr"
-        #   null_markers:
-        #     - "0E-8"
-        #     - "-"
-        #     - ""
-        #     - "null"
-        #     - "NULL"
-      
