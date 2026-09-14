@@ -5,7 +5,8 @@ schemas:
   silver: "default"
 
 tables:
-  address:  #ini disamain sama pipelinenya   
+  address:  #ini disamain sama pipelinenya 
+  #ini test aja hehe  
 
     bronze:
       source_table: "cfaddr"
