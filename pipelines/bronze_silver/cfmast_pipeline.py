@@ -1,39 +1,4 @@
-# ============================================================
-# cfzemp_pipeline.py — REFACTORED pipeline for employee table
-#
-# DESIGN PRINCIPLE:
-#   YAML tells us WHAT the table looks like (columns, keys, read format).
-#   spark.conf tells us WHERE the data lives (S3 bucket, JDBC host, catalog).
-#   This script wires the two together.
-#
-# CHANGES FROM ORIGINAL TEMPLATE:
-#
-#   1. sys.path.insert → REMOVED
-#      DAB's --editable install handles imports. Every dev had to
-#      change the hardcoded path before — now it just works.
-#
-#   2. source_type from YAML → spark.conf.get("pipeline.source_type")
-#      Switching S3↔JDBC is now a deploy-time decision (DAB target),
-#      not a file edit. Dev can use S3, prod can use JDBC.
-#
-#   3. S3 path from YAML → constructed from spark.conf + source_table
-#      spark.conf.get("pipeline.s3_bucket") + "/" + source_table + "/"
-#      No hardcoded S3 paths in YAML or Python.
-#
-#   4. read_options flattened — was bronze_cfg["s3"]["read_options"]
-#      Now bronze_cfg["read_options"] (we removed the s3:/jdbc: blocks
-#      from YAML since those were infrastructure, not table definition).
-#
-#   5. JDBC reads connection from spark.conf, not YAML — host, port,
-#      database come from DAB variables. Passwords from Secret Scope.
-#      No connection details in any committed config file.
-#
-#   6. Clean if/else for S3 vs JDBC — no more commenting/uncommenting
-#      code blocks. Runtime source_type drives the branch.
-#
-#   7. Unique function names — bronze_employee(), staged_employee().
-#      SDP silently overwrites duplicate function names across scripts.
-# ============================================================
+## TEST PERUBAHAN
 
 import dlt
 from pyspark.sql import functions as F
