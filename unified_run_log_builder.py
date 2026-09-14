@@ -33,179 +33,227 @@
 # Configuration - Set your target catalog, schema, and table name
 catalog = "mii_workspace"
 schema = "default"
-table = "unified_run_log"
+table = "log_jobs_2"
 
 # How many days of history to include
 lookback_days = 30
 
+PIPELINE_NAMES = [
+    "pipeline_btn_development"
+]
+
 print(f"Target table: {catalog}.{schema}.{table}")
 print(f"Lookback period: {lookback_days} days")
+print(f"Monitoring pipelines: {PIPELINE_NAMES}")
 
 # COMMAND ----------
 
 # DBTITLE 1,Get all pipeline IDs
-# Get all distinct pipeline IDs from the last N days
 pipeline_ids_df = spark.sql(f"""
-  SELECT DISTINCT pipeline_id
-  FROM system.lakeflow.pipeline_update_timeline
-  WHERE period_start_time > CURRENT_TIMESTAMP() - INTERVAL {lookback_days} DAYS
+  SELECT DISTINCT pipeline_id, name
+  FROM (
+    SELECT *, ROW_NUMBER() OVER(PARTITION BY workspace_id, pipeline_id ORDER BY change_time DESC) AS rn
+    FROM system.lakeflow.pipelines
+  )
+  WHERE rn = 1
+    AND name IN ({','.join([f"'{n}'" for n in PIPELINE_NAMES])})
 """)
 
 pipeline_ids = [row.pipeline_id for row in pipeline_ids_df.collect()]
-print(f"Found {len(pipeline_ids)} pipelines with activity in the last {lookback_days} days")
-print(pipeline_ids)
+print(f"Found {len(pipeline_ids)} pipeline(s) matching nama:")
+display(pipeline_ids_df)
+
+# COMMAND ----------
+
+import requests
+
+ctx = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
+host = ctx.apiUrl().get()
+token = ctx.apiToken().get()
+headers = {"Authorization": f"Bearer {token}"}
+
+def get_pipeline_spec(pipeline_id):
+    r = requests.get(f"{host}/api/2.0/pipelines/{pipeline_id}", headers=headers)
+    r.raise_for_status()
+    return r.json()
+
+# COMMAND ----------
+
+# Cek konfigurasi event log & build mapping
+pipeline_info = []
+
+for pid in pipeline_ids:
+    try:
+        resp = get_pipeline_spec(pid)
+        spec = resp.get("spec", resp)
+
+        name = spec.get("name", pid)
+        catalog_p = spec.get("catalog")
+        schema_p = spec.get("schema")
+        event_log_cfg = spec.get("event_log")
+
+        if event_log_cfg:
+            elog_catalog = event_log_cfg.get("catalog") or catalog_p
+            elog_schema = event_log_cfg.get("schema") or schema_p
+            elog_table = event_log_cfg.get("name", "event_log")
+            full_table = f"{elog_catalog}.{elog_schema}.{elog_table}"
+            status = "PUBLISHED"
+        else:
+            full_table = None
+            status = "NOT_PUBLISHED"
+
+        pipeline_info.append({
+            "pipeline_id": pid, "name": name,
+            "catalog": catalog_p, "schema": schema_p,
+            "event_log_status": status, "event_log_table": full_table
+        })
+    except Exception as e:
+        pipeline_info.append({
+            "pipeline_id": pid, "name": None, "catalog": None, "schema": None,
+            "event_log_status": f"ERROR: {e}", "event_log_table": None
+        })
+
+pipeline_event_log_tables = {
+    p["pipeline_id"]: p["event_log_table"]
+    for p in pipeline_info
+    if p["event_log_table"] is not None
+}
+
+not_ready = [p for p in pipeline_info if p["event_log_table"] is None]
+print(f"Pipeline siap dipakai: {len(pipeline_event_log_tables)}")
+if not_ready:
+    print(f"{len(not_ready)} pipeline belum published event log:")
+    for p in not_ready:
+        print(f"  - {p['name']} ({p['pipeline_id']}) - {p['event_log_status']}")
 
 # COMMAND ----------
 
 # DBTITLE 1,Get pipeline row counts from event_log
+# Get per-table (per-flow) metrics from event log
 from pyspark.sql import functions as F
 from functools import reduce
 
-# Query event_log for each pipeline to get row counts per update
-# event_log() requires a SQL Warehouse or Shared cluster
-row_count_dfs = []
+flow_metrics_dfs = []
 skipped_pipelines = []
 
-for pid in pipeline_ids:
+for pid, tbl in pipeline_event_log_tables.items():
     try:
         df = spark.sql(f"""
+            WITH flow_events AS (
+              SELECT
+                origin.pipeline_id,
+                origin.update_id,
+                origin.flow_name AS table_name,
+                timestamp,
+                details:flow_progress.status AS status,
+                TRY_CAST(details:flow_progress.metrics.num_output_rows AS BIGINT) AS num_output_rows,
+                TRY_CAST(details:flow_progress.metrics.num_upserted_rows AS BIGINT) AS num_upserted_rows,
+                TRY_CAST(details:flow_progress.metrics.num_deleted_rows AS BIGINT) AS num_deleted_rows
+              FROM {tbl}
+              WHERE event_type = 'flow_progress'
+            )
             SELECT
-              origin.pipeline_id,
-              origin.update_id,
-              SUM(TRY_CAST(details:flow_progress.metrics.num_output_rows AS BIGINT)) AS total_rows_processed
-            FROM event_log(pipeline_id => '{pid}')
-            WHERE event_type = 'flow_progress'
-              AND details:flow_progress.status = 'COMPLETED'
-            GROUP BY origin.pipeline_id, origin.update_id
+              pipeline_id, update_id, table_name,
+              MIN(CASE WHEN status = 'STARTING' THEN timestamp END) AS start_time,
+              MAX(CASE WHEN status = 'COMPLETED' THEN timestamp END) AS end_time,
+              MAX(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS has_failed,
+              SUM(COALESCE(num_output_rows,0) + COALESCE(num_upserted_rows,0)) AS total_rows_processed,
+              SUM(COALESCE(num_deleted_rows,0)) AS total_rows_deleted
+            FROM flow_events
+            GROUP BY pipeline_id, update_id, table_name
         """)
-        row_count_dfs.append(df)
+        df = df.persist()
+        df.count()
+        flow_metrics_dfs.append(df)
     except Exception as e:
-        skipped_pipelines.append((pid, str(e)[:100]))
-        print(f"⚠️ Skipped pipeline {pid}: {str(e)[:100]}")
+        skipped_pipelines.append((pid, str(e)))
+        print(f"⚠️ Skipped pipeline {pid}: {e}")
 
-# Union all row count DataFrames
-if row_count_dfs:
-    row_counts_df = reduce(lambda a, b: a.union(b), row_count_dfs)
-    row_counts_df.createOrReplaceTempView("pipeline_row_counts")
-    print(f"\n✅ Successfully collected row counts from {len(row_count_dfs)} pipelines")
+if flow_metrics_dfs:
+    flow_metrics_df = reduce(lambda a, b: a.union(b), flow_metrics_dfs)
+    print(f"✅ Collected per-table metrics from {len(flow_metrics_dfs)} pipeline(s)")
 else:
-    row_counts_df = None
-    print("\n⚠️ No row counts collected (event_log may not be accessible from this cluster)")
-
-if skipped_pipelines:
-    print(f"\n⚠️ Skipped {len(skipped_pipelines)} pipelines due to errors")
+    flow_metrics_df = None
+    print("⚠️ No per-table metrics collected")
 
 # COMMAND ----------
 
 # DBTITLE 1,Build unified run log DataFrame
-# Build the unified log combining pipeline runs and job runs
-unified_df = spark.sql(f"""
-  WITH pipeline_runs AS (
-    SELECT
-      'PIPELINE' AS run_type,
-      t.pipeline_id AS id,
-      p.name AS name,
-      t.update_id AS run_id,
-      t.result_state AS status,
-      t.period_start_time AS start_time,
-      t.period_end_time AS end_time,
-      TIMESTAMPDIFF(SECOND, t.period_start_time, t.period_end_time) AS duration_seconds
-    FROM system.lakeflow.pipeline_update_timeline t
-    LEFT JOIN (
-      SELECT *, ROW_NUMBER() OVER(PARTITION BY workspace_id, pipeline_id ORDER BY change_time DESC) AS rn
-      FROM system.lakeflow.pipelines
-    ) p ON t.pipeline_id = p.pipeline_id AND t.workspace_id = p.workspace_id AND p.rn = 1
-    WHERE t.result_state IS NOT NULL
-      AND t.period_start_time > CURRENT_TIMESTAMP() - INTERVAL {lookback_days} DAYS
-  ),
-  job_runs AS (
-    SELECT
-      'JOB' AS run_type,
-      t.job_id AS id,
-      j.name AS name,
-      t.run_id AS run_id,
-      t.result_state AS status,
-      t.period_start_time AS start_time,
-      t.period_end_time AS end_time,
-      TIMESTAMPDIFF(SECOND, t.period_start_time, t.period_end_time) AS duration_seconds
-    FROM system.lakeflow.job_run_timeline t
-    LEFT JOIN (
-      SELECT *, ROW_NUMBER() OVER(PARTITION BY workspace_id, job_id ORDER BY change_time DESC) AS rn
-      FROM system.lakeflow.jobs
-    ) j ON t.job_id = j.job_id AND t.workspace_id = j.workspace_id AND j.rn = 1
-    WHERE t.result_state IS NOT NULL
-      AND t.period_start_time > CURRENT_TIMESTAMP() - INTERVAL {lookback_days} DAYS
-  )
-  SELECT * FROM pipeline_runs
-  UNION ALL
-  SELECT * FROM job_runs
-""")
-
-# Join with row counts (if available)
-if row_counts_df is not None:
-    final_df = unified_df.join(
-        row_counts_df,
-        (unified_df.id == row_counts_df.pipeline_id) & (unified_df.run_id == row_counts_df.update_id),
-        "left"
-    ).select(
-        unified_df["run_type"],
-        unified_df["id"],
-        unified_df["name"],
-        unified_df["run_id"],
-        unified_df["status"],
-        unified_df["start_time"],
-        unified_df["end_time"],
-        unified_df["duration_seconds"],
-        row_counts_df["total_rows_processed"]
+# Build unified run log (per-table granularity)
+if flow_metrics_df is not None:
+    flow_metrics_df = (
+        flow_metrics_df
+        .withColumn("duration_seconds", F.col("end_time").cast("long") - F.col("start_time").cast("long"))
+        .withColumn(
+            "status",
+            F.when(F.col("has_failed") == 1, "FAILED")
+             .when(F.col("end_time").isNotNull(), "COMPLETED")
+             .otherwise("UNKNOWN")
+        )
     )
-else:
-    final_df = unified_df.withColumn("total_rows_processed", F.lit(None).cast("bigint"))
 
-final_df = final_df.orderBy(F.col("start_time").desc())
-print(f"✅ Unified log built: {final_df.count()} total rows")
-final_df.printSchema()
+    pipeline_names_df = spark.sql("""
+        SELECT pipeline_id, name FROM (
+          SELECT *, ROW_NUMBER() OVER(PARTITION BY workspace_id, pipeline_id ORDER BY change_time DESC) AS rn
+          FROM system.lakeflow.pipelines
+        ) WHERE rn = 1
+    """)
+
+    final_df = (
+        flow_metrics_df
+        .join(pipeline_names_df, "pipeline_id", "left")
+        .select(
+            F.lit("PIPELINE").alias("run_type"),
+            F.col("pipeline_id").alias("id"),
+            F.col("name"),
+            F.col("update_id").alias("run_id"),
+            F.col("table_name"),
+            F.col("status"),
+            F.col("start_time"),
+            F.col("end_time"),
+            F.col("duration_seconds"),
+            F.col("total_rows_processed"),
+            F.col("total_rows_deleted"),
+          )
+        .orderBy(F.col("start_time").desc())
+    )
+    print(f"Unified log built: {final_df.count()} rows")
+    final_df.printSchema()
+else:
+    final_df = None
+    print("final_df kosong — cek flow_metrics_df di cell sebelumnya")
 
 # COMMAND ----------
 
 # DBTITLE 1,Write to Delta table
-# Write the unified run log to a Delta table using MERGE (keeps historical data)
+# Write to Delta table
 target_table = f"{catalog}.{schema}.{table}"
 
-# Create table if it doesn't exist
 spark.sql(f"""
   CREATE TABLE IF NOT EXISTS {target_table} (
-    run_type STRING,
-    id STRING,
-    name STRING,
-    run_id STRING,
-    status STRING,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    duration_seconds LONG,
-    total_rows_processed LONG
+    run_type STRING, id STRING, name STRING, run_id STRING, table_name STRING,
+    status STRING, start_time TIMESTAMP, end_time TIMESTAMP, duration_seconds LONG,
+    total_rows_processed LONG, total_rows_deleted LONG
   )
 """)
 
-# Use MERGE to upsert: insert new runs, update existing ones (e.g. status changes)
 final_df.createOrReplaceTempView("new_runs")
 
 spark.sql(f"""
   MERGE INTO {target_table} AS target
   USING new_runs AS source
-  ON target.id = source.id AND target.run_id = source.run_id
+  ON target.id = source.id
+     AND target.run_id = source.run_id
+     AND target.table_name = source.table_name
   WHEN MATCHED AND source.status != target.status THEN
-    UPDATE SET
-      status = source.status,
-      end_time = source.end_time,
+    UPDATE SET status = source.status, end_time = source.end_time,
       duration_seconds = source.duration_seconds,
-      total_rows_processed = source.total_rows_processed
-  WHEN NOT MATCHED THEN
-    INSERT *
+      total_rows_processed = source.total_rows_processed,
+      total_rows_deleted = source.total_rows_deleted
+  WHEN NOT MATCHED THEN INSERT *
 """)
 
-row_count = spark.sql(f"SELECT COUNT(*) as cnt FROM {target_table}").collect()[0].cnt
-print(f"✅ MERGE completed on: {target_table}")
-print(f"   Total rows in table: {row_count}")
+print(f"MERGE completed on: {target_table}")
 
 # COMMAND ----------
 
@@ -221,3 +269,25 @@ result = spark.sql(f"""
 print(f"Table: {catalog}.{schema}.{table}")
 print(f"Total rows: {result.count()}")
 display(result)
+
+# COMMAND ----------
+
+# 1. Cek apakah pipeline_event_log_tables beneran keisi ID yang bener (bukan placeholder)
+print("Pipeline IDs dari system table:", pipeline_ids)
+print("Mapping event log tables:", pipeline_event_log_tables)
+print("Overlap:", set(pipeline_ids) & set(pipeline_event_log_tables.keys()))
+
+# COMMAND ----------
+
+tbl = "mii_workspace.default.event_log_pipeline_btn"
+
+spark.sql(f"""
+    SELECT origin.flow_name, timestamp, 
+           details:flow_progress.status AS status,
+           details
+    FROM {tbl}
+    WHERE event_type = 'flow_progress'
+      AND origin.update_id = 'f33af277-1aa7-4d5a-a6bb-8216cfb1c9b0'
+      AND origin.flow_name = 'mii_workspace.default.silver_s3_customer'
+    ORDER BY timestamp
+""").show(truncate=False)
