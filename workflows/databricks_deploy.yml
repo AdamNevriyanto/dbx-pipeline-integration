@@ -28,6 +28,9 @@ jobs:
       - name: Validate Bundle
         run: databricks bundle validate -t dev
 
+      - name: Validate Bundle (dry-run)
+        run: databricks bundle validate -t dev --output json
+
       - name: Deploy to Dev
         run: databricks bundle deploy -t dev
 
@@ -39,8 +42,9 @@ jobs:
     env:
       DATABRICKS_HOST: https://dbc-fba03bad-86dd.cloud.databricks.com/
       # Use the Production Service Principal (ID: 045f23e4-...) credentials here
-      DATABRICKS_CLIENT_ID: 045f23e4-04e6-470e-a253-4aea5a2846c4
-      DATABRICKS_CLIENT_SECRET: dose02cc1a5e0c899c0ced50fea54000b240
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -49,6 +53,9 @@ jobs:
 
       - name: Validate Bundle
         run: databricks bundle validate -t prod
+
+      - name: Validate Bundle (dry-run)
+        run: databricks bundle validate -t prod --output json
 
       - name: Deploy to Prod
         run: databricks bundle deploy -t prod
