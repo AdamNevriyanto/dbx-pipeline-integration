@@ -1,0 +1,179 @@
+catalog: "mii_workspace"
+
+schemas:
+  bronze: "default"
+  silver: "default"
+
+tables:
+  address:  #ini disamain sama pipelinenya   
+
+    bronze:
+      source_table: "cfaddr"
+      source_type: "s3"
+      primary_keys:
+        - "CFCIF#"      
+      cluster_by_col: "CFVDT6" # cluster by date
+
+      ## Config untuk JDBC (PASTIKAN SEMUA VALUENYA BERUPA STRING dengan "")
+      # jdbc:
+      #   read_options: 
+      #     host: "dbx-sandbox-db.cl2c6ukwkfxn.ap-southeast-3.rds.amazonaws.com"
+      #     port: "5432"
+      #     database: "postgres"
+      #     # schema: ""
+      #     table: "cfmast"
+      #     driver: "org.postgresql.Driver"
+      #     secret_scope: "jdbc-scope-jeremi"
+      #     secret_key_user: "db-username"
+      #     secret_key_password: "db-password"
+      #     ssl_mode: "require"
+      # # OPTIONAL PARAMETER
+      #     fetchsize: "10000"
+      #     partitionColumn: "CFCIF"
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"      
+
+      ## Config S3
+      s3:
+        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfaddr/"
+        read_options:
+          cloudFiles.format: "csv"
+          header: "true"
+          delimiter: ","
+          cloudFiles.inferColumnTypes: "true"
+          cloudFiles.schemaEvolutionMode: "addNewColumns"
+          cloudFiles.schemaHints: "`CFCIF#` STRING, CFNA2 STRING"
+
+    silver:
+      primary_keys:
+        - "CFCIF"
+      partition_columns: "CFVDT6"
+      incremental_columns: [CFVDT6]
+
+    columns:
+    - name: CFCIF
+      source: CFCIF#
+      type: string
+      cleansing:
+        trim: true
+    - name: CFASEQ
+      source: CFASEQ
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFNA2
+      source: CFNA2
+      type: string
+      cleansing:
+        trim: true
+    - name: CFNA3
+      source: CFNA3
+      type: string
+      cleansing:
+        trim: true
+    - name: CFNA4
+      source: CFNA4
+      type: string
+      cleansing:
+        trim: true
+    - name: CFNA5
+      source: CFNA5
+      type: string
+      cleansing:
+        trim: true
+    - name: CFZIP
+      source: CFZIP
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFFORN
+      source: CFFORN
+      type: string
+      cleansing:
+        trim: true
+    - name: CFADSC
+      source: CFADSC
+      type: string
+      cleansing:
+        trim: true
+    - name: CFUSE
+      source: CFUSE
+      type: string
+      cleansing:
+        trim: true
+    - name: CFINVC
+      source: CFINVC
+      type: string
+      cleansing:
+        trim: true
+    - name: CFMAIL
+      source: CFMAIL
+      type: string
+      cleansing:
+        trim: true
+    - name: CFAYRS
+      source: CFAYRS
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFAYRC
+      source: CFAYRC
+      type: string
+      cleansing:
+        trim: true
+    - name: CFAPTY
+      source: CFAPTY
+      type: string
+      cleansing:
+        trim: true
+    - name: CFADLM
+      source: CFADLM
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFADL6
+      source: CFADL6
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFADI7
+      source: CFADI7
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFADI6
+      source: CFADI6
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFADR7
+      source: CFADR7
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFADR6
+      source: CFADR6
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFVUSR
+      source: CFVUSR
+      type: string
+      cleansing:
+        trim: true
+    - name: CFVDT6
+      source: CFVDT6
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFVDT7
+      source: CFVDT7
+      type: integer
+      cleansing:
+        trim: true
+    - name: CFVTME
+      source: CFVTME
+      type: integer
+      cleansing:
+        trim: true
