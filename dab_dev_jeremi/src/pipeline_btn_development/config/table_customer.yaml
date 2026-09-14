@@ -1,0 +1,470 @@
+catalog: "mii_workspace"
+
+schemas:
+  bronze: "default"
+  silver: "default"
+
+tables:
+  customer:
+    bronze:
+      source_table: "cfmast"
+      source_type: "s3"
+      primary_keys:
+        - "CFCIF#"      
+      cluster_by_col: "CFVDT6"
+
+      ## Config untuk JDBC (PASTIKAN SEMUA VALUENYA BERUPA STRING dengan "")
+      # jdbc:
+      #   read_options: 
+      #     host: "dbx-sandbox-db.cl2c6ukwkfxn.ap-southeast-3.rds.amazonaws.com"
+      #     port: "5432"
+      #     database: "postgres"
+      #     # schema: ""
+      #     table: "cfmast"
+      #     driver: "org.postgresql.Driver"
+      #     secret_scope: "jdbc-scope-jeremi"
+      #     secret_key_user: "db-username"
+      #     secret_key_password: "db-password"
+      #     ssl_mode: "require"
+      # # OPTIONAL PARAMETER
+      #     fetchsize: "10000"
+      #     partitionColumn: "CFCIF"
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"      
+
+      ## Config S3
+      s3:
+        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfmast/"
+        read_options:
+          cloudFiles.format: "csv"
+          header: "true"
+          delimiter: ","
+          cloudFiles.inferColumnTypes: "true"
+          cloudFiles.schemaEvolutionMode: "addNewColumns"
+          cloudFiles.schemaHints: "`CFCIF#` STRING, CFSSNO STRING"
+
+    silver:
+      primary_keys:
+        - "CFCIF"
+      partition_columns: "CFVDT6"
+      incremental_columns: [CFVDT6]
+
+    columns:
+      - name: CFRECI
+        source: CFRECI
+        type: string
+        cleansing:
+          trim: true
+          null_markers: [""]
+      - name: CFRETN
+        source: CFRETN
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFBNKN
+        source: CFBNKN
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFBRNN
+        source: CFBRNN
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFCIF
+        source: CFCIF#
+        type: string
+        cleansing:
+          trim: true
+      - name: CFALIS
+        source: CFALIS
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSNME
+        source: CFSNME
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSEQ
+        source: CFSEQ#
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFSNPH
+        source: CFSNPH
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFINQC
+        source: CFINQC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFOFFR
+        source: CFOFFR
+        type: string
+        cleansing:
+          trim: true
+      - name: CFINSC
+        source: CFINSC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVIPC
+        source: CFVIPC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFDEAD
+        source: CFDEAD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFHLDM
+        source: CFHLDM
+        type: string
+        cleansing:
+          trim: true
+      - name: CFPROA
+        source: CFPROA
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC1
+        source: CFSIC1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC2
+        source: CFSIC2
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC3
+        source: CFSIC3
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC4
+        source: CFSIC4
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC5
+        source: CFSIC5
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC6
+        source: CFSIC6
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC7
+        source: CFSIC7
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSIC8
+        source: CFSIC8
+        type: string
+        cleansing:
+          trim: true
+      - name: CFNA1
+        source: CFNA1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFNA1A
+        source: CFNA1A
+        type: string
+        cleansing:
+          trim: true
+      - name: CFRESD
+        source: CFRESD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSTAT
+        source: CFSTAT
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCNTY
+        source: CFCNTY
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCOUN
+        source: CFCOUN
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCITZ
+        source: CFCITZ
+        type: string
+        cleansing:
+          trim: true
+      - name: CFRACE
+        source: CFRACE
+        type: string
+        cleansing:
+          trim: true
+      - name: CFNAMC
+        source: CFNAMC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFORGD
+        source: CFORGD
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFORG6
+        source: CFORG6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFDLM
+        source: CFDLM
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFDLM6
+        source: CFDLM6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFFSDT
+        source: CFFSDT
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFFSD6
+        source: CFFSD6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFSSNO
+        source: CFSSNO
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSSCD
+        source: CFSSCD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSSFX
+        source: CFSSFX
+        type: string
+        cleansing:
+          trim: true
+      - name: CFBIRD
+        source: CFBIRD
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFBIR6
+        source: CFBIR6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFSEX
+        source: CFSEX
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCLAS
+        source: CFCLAS
+        type: string
+        cleansing:
+          trim: true
+      - name: CFINDI
+        source: CFINDI
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSMSA
+        source: CFSMSA
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFBUST
+        source: CFBUST
+        type: string
+        cleansing:
+          trim: true
+      - name: CFSCLA
+        source: CFSCLA
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCRAT
+        source: CFCRAT
+        type: string
+        cleansing:
+          trim: true
+      - name: CFGRUP
+        source: CFGRUP
+        type: string
+        cleansing:
+          trim: true
+      - name: CFCCYC
+        source: CFCCYC
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFTINS
+        source: CFTINS
+        type: string
+        cleansing:
+          trim: true
+      - name: CFWHCD
+        source: CFWHCD
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFWHPR
+        source: CFWHPR
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFWHDT
+        source: CFWHDT
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFWHD6
+        source: CFWHD6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFUIC1
+        source: CFUIC1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC2
+        source: CFUIC2
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC3
+        source: CFUIC3
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC4
+        source: CFUIC4
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC5
+        source: CFUIC5
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC6
+        source: CFUIC6
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC7
+        source: CFUIC7
+        type: string
+        cleansing:
+          trim: true
+      - name: CFUIC8
+        source: CFUIC8
+        type: string
+        cleansing:
+          trim: true
+      - name: CSZCOD
+        source: CSZCOD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFIEX6
+        source: CFIEX6
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFIEX7
+        source: CFIEX7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFYIDP
+        source: CFYIDP
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYIDS
+        source: CFYIDS
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYBIP
+        source: CFYBIP
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYIDC
+        source: CFYIDC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYGEO
+        source: CFYGEO
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYTIB
+        source: CFYTIB
+        type: string
+        cleansing:
+          trim: true
+      - name: CFYTIA
+        source: CFYTIA
+        type: string
+        cleansing:
+          trim: true
+      - name: CFDRAC
+        source: CFDRAC
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFDRAT
+        source: CFDRAT
+        type: string
+        cleansing:
+          trim: true
+      - name: CFECRC
+        source: CFECRC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFDRWN
+        source: CFDRWN
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVUSR
+        source: CFVUSR
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVDT7
+        source: CFVDT7
+        type: integer
+        cleansing:
+          trim: true
+      - name: CFVDT6
+        source: CFVDT6
+        type: integer
+        cleansing:
+          trim: true
+      
