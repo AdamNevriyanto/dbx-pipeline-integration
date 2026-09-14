@@ -22,12 +22,12 @@ resources:
       photon: true
       channel: current
       continuous: false
-      root_path: ../pipelines/bronze_silver/employee
+      root_path: ../pipelines/bronze_silver
 
       # Only the employee pipeline script
       libraries:
         - glob:
-            include: ../pipelines/bronze_silver/employee/**
+            include: ../pipelines/bronze_silver/cfzemp_pipeline.py
 
       environment:
         dependencies:

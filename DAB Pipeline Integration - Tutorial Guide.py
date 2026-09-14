@@ -56,19 +56,15 @@
 # MAGIC │   └── sdp_silver_transform.py                  ← Column rename, trim, cast, null markers
 # MAGIC │
 # MAGIC ├── pipelines/                                  ← PIPELINE SCRIPTS (grouped by layer)
-# MAGIC │   ├── bronze_silver/                           ← Per-table ingestion + cleansing
-# MAGIC │   │   ├── employee/
-# MAGIC │   │   │   └── cfzemp_pipeline.py               ← Bronze + Silver for employee
-# MAGIC │   │   ├── customer/                            ← (future)
-# MAGIC │   │   │   └── cfmast_pipeline.py
-# MAGIC │   │   └── address/                             ← (future)
-# MAGIC │   │       └── cfaddr_pipeline.py
+# MAGIC │   ├── bronze_silver/                           ← Per-table ingestion + cleansing (flat, one script per table)
+# MAGIC │   │   ├── cfzemp_pipeline.py                   ← Bronze + Silver for employee
+# MAGIC │   │   ├── cfmast_pipeline.py                   ← Bronze + Silver for customer (future)
+# MAGIC │   │   └── cfaddr_pipeline.py                   ← Bronze + Silver for address (future)
 # MAGIC │   └── gold/                                    ← Business layer (future)
-# MAGIC │       └── customer_360/
-# MAGIC │           └── customer_360_pipeline.py          ← Joins multiple silver tables
+# MAGIC │       └── customer_360_pipeline.py              ← Joins multiple silver tables
 # MAGIC │
 # MAGIC ├── resources/                                  ← PIPELINE RESOURCE DEFINITIONS (one per pipeline)
-# MAGIC │   ├── pipeline_employee.pipeline.yml            ← Deploys bronze_silver/employee/
+# MAGIC │   ├── pipeline_employee.pipeline.yml            ← Deploys bronze_silver/cfzemp_pipeline.py
 # MAGIC │   ├── pipeline_customer.pipeline.yml            ← (future)
 # MAGIC │   └── pipeline_customer_360.pipeline.yml        ← (future)
 # MAGIC │
@@ -231,10 +227,10 @@
 # MAGIC
 # MAGIC ### Step 2: Create the Pipeline Script
 # MAGIC
-# MAGIC **File**: `pipelines/bronze_silver/<TABLE_NAME>/<source>_pipeline.py`
+# MAGIC **File**: `pipelines/bronze_silver/<source>_pipeline.py`
 # MAGIC
 # MAGIC ```python
-# MAGIC # pipelines/bronze_silver/invoice/cfinvc_pipeline.py
+# MAGIC # pipelines/bronze_silver/cfinvc_pipeline.py
 # MAGIC import dlt
 # MAGIC from pyspark.sql import functions as F
 # MAGIC from utils.config_load import load_table_config, get_jdbc_options_from_conf
@@ -358,11 +354,11 @@
 # MAGIC       photon: true
 # MAGIC       channel: current
 # MAGIC       continuous: false
-# MAGIC       root_path: ../pipelines/bronze_silver/invoice
+# MAGIC       root_path: ../pipelines/bronze_silver
 # MAGIC
 # MAGIC       libraries:
 # MAGIC         - glob:
-# MAGIC             include: ../pipelines/bronze_silver/invoice/**
+# MAGIC             include: ../pipelines/bronze_silver/cfinvc_pipeline.py
 # MAGIC
 # MAGIC       environment:
 # MAGIC         dependencies:
@@ -393,8 +389,8 @@
 # MAGIC ### Checklist: What to Change
 # MAGIC
 # MAGIC * [ ] `pipeline_invoice` → your table name (resource key + display name)
-# MAGIC * [ ] `root_path` → `../pipelines/bronze_silver/<your_table>/`
-# MAGIC * [ ] `libraries glob` → same path with `/**`
+# MAGIC * [ ] `root_path` → `../pipelines/bronze_silver` (shared, same for all)
+# MAGIC * [ ] `libraries glob` → `../pipelines/bronze_silver/<source>_pipeline.py` (specific script)
 # MAGIC * [ ] `configuration:` block → copy as-is (all 13 variables)
 # MAGIC
 # MAGIC **Note**: Paths use `../` because resource files are in `resources/`, one level below the bundle root.
@@ -657,7 +653,7 @@
 # MAGIC | # | File | Example |
 # MAGIC | --- | --- | --- |
 # MAGIC | 1 | `config/table_<name>.yaml` | `config/table_invoice.yaml` |
-# MAGIC | 2 | `pipelines/bronze_silver/<name>/<source>_pipeline.py` | `pipelines/bronze_silver/invoice/cfinvc_pipeline.py` |
+# MAGIC | 2 | `pipelines/bronze_silver/<source>_pipeline.py` | `pipelines/bronze_silver/cfinvc_pipeline.py` |
 # MAGIC | 3 | `resources/pipeline_<name>.pipeline.yml` | `resources/pipeline_invoice.pipeline.yml` |
 # MAGIC
 # MAGIC Three files. No conflicts with other developers because each file has a unique name.
@@ -678,7 +674,7 @@
 # MAGIC
 # MAGIC 4. Push and open PR
 # MAGIC    git add config/table_invoice.yaml
-# MAGIC    git add pipelines/bronze_silver/invoice/cfinvc_pipeline.py
+# MAGIC    git add pipelines/bronze_silver/cfinvc_pipeline.py
 # MAGIC    git add resources/pipeline_invoice.pipeline.yml
 # MAGIC    git commit -m "Add invoice table pipeline"
 # MAGIC    git push origin feature/add-table-invoice
