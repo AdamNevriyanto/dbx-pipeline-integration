@@ -1,0 +1,67 @@
+bundle:
+  name: dbx_pipeline_integration
+
+sync:
+  include:
+    - config/**
+    - utils/**
+    - pipelines/dummy_sdp_pipeline/**
+
+variables:
+  catalog:
+    default: mii_workspace
+    description: The catalog to use
+  schema:
+    default: default
+    description: The schema to use
+
+
+resources:
+  pipelines:
+    pipeline_btn_development:
+      name: pipeline_btn_development
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      root_path: ../pipelines/dummy_sdp_pipeline
+      libraries:
+        - glob:
+            include: ../pipelines/dummy_sdp_pipeline/transformations/pipeline_btn_development/**
+      environment:
+        dependencies:
+          - --editable ${workspace.file_path}
+
+targets:
+  personal:
+    mode: development
+    default: true
+    variables:
+      catalog: mii_workspace
+      schema: jeremi_dev
+    # resources:
+    #   pipelines:
+    #     pipeline_btn_development:
+    #       catalog: ${var.catalog}
+    #       schema: ${var.schema}
+
+targets:
+  dev:
+    mode: production
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+    variables:
+      catalog: mii_workspace
+      schema: default
+    presets:
+      name_prefix: "dev_"
+
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-fba03bad-86dd.cloud.databricks.com
+    variables:
+      catalog: mii_workspace
+      schema: default
+    presets:
+      name_prefix: "prod_"
