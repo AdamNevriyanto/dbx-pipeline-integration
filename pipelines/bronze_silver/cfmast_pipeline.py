@@ -83,6 +83,9 @@ def bronze_employee():
 @dlt.expect_all_or_drop(
     {f"valid_{pk}": f"`{pk}` IS NOT NULL" for pk in silver_cfg["primary_keys"]}
 )
+## Cek Data Quality Gender dan No Identitas
+@dlt.expect("valid_gender", "CFSEX IN ('M', 'F')")
+@dlt.expect("valid_identity_number", "CFSSNO RLIKE '^[A-Za-z0-9]+$'")
 def staged_employee():
     """Apply column transforms and filter null PKs before merge."""
     df_bronze = dlt.read_stream(f"bronze_{source_type}_{bronze_cfg['source_table']}")
