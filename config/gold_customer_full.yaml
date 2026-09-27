@@ -1,0 +1,51 @@
+catalog: "mii_workspace"
+schema: "default"
+
+gold_table: "gold_customer_full"
+
+sources:
+  customer_full:
+    table: "silver_s3_customer"
+  address:
+    table: "silver_s3_address"
+    ranking:
+      partition_by: "CFSEQ"
+      order_columns: "CFVDT6"
+      order_by: "desc"
+  contact:
+    table: "silver_s3_contact"
+    ranking:
+      partition_by: "CFSEQ"
+      order_columns: "CFVDT6"
+      order_by: "desc"
+
+joins:
+  - left: "customer"
+    right: "address"
+    type: "left"
+    on:
+      - left_col: "CFCIF"
+        right_col: "CFCIF"
+  - left: "customer"
+    right: "contact"
+    type: "left"
+    on:
+      - left_col: "CFCIF"
+        right_col: "CFCIF"
+
+select_columns:
+  - source: "customer"
+    columns:
+      - CFCIF
+      - CFSNME
+      - CFSEX
+      - CFBIRD
+  - source: "address"
+    columns:
+      - CFADDR1
+      - CFADDR2
+      - CFCITY
+      - CFZIP
+  - source: "contact"
+    columns:
+      - 

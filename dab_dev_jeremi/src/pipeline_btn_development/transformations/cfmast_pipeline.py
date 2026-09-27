@@ -59,6 +59,8 @@ def bronze_customer():
 @dlt.view(name=f"silver_{TABLE_NAME}_staging")
 ## FILTER PK tidak boleh NULL untuk kebutuhan merging di akhir.
 @dlt.expect_all_or_drop({f"valid_{pk}": f"`{pk}` IS NOT NULL" for pk in silver_cfg["primary_keys"]})
+@dlt.expect("valid_gender", "CFSEX IN ('M', 'F')")
+@dlt.expect("valid_identity_number", "CFSSNO RLIKE '^[A-Za-z0-9]+$'")
 def staged():
     df_bronze = dlt.read_stream(f"bronze_{source_type}_{bronze_cfg['source_table']}")
     return transform(df_bronze, table_cfg)
