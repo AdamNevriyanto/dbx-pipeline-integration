@@ -27,7 +27,7 @@ resources:
       # Only the employee pipeline script
       libraries:
         - glob:
-            include: ../pipelines/bronze_silver/cfmast_pipeline.py
+            include: ../pipelines/bronze_silver/employee/**
 
       environment:
         dependencies:
