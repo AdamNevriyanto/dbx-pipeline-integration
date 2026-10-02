@@ -1,0 +1,133 @@
+catalog: "mii_workspace"
+
+schemas:
+  bronze: "default"
+  silver: "default"
+
+tables:
+  contact:
+    bronze:
+      source_table: "cfconn"
+      source_type: "s3"
+      primary_keys:
+        - "CFCIF#"
+        - "CFZSEQ"
+      cluster_by_col: "CFVDT6"
+
+      ## Config untuk JDBC (PASTIKAN SEMUA VALUENYA BERUPA STRING dengan "")
+      # jdbc:
+      #   read_options: 
+      #     host: "dbx-sandbox-db.cl2c6ukwkfxn.ap-southeast-3.rds.amazonaws.com"
+      #     port: "5432"
+      #     database: "postgres"
+      #     # schema: ""
+      #     table: "cfmast"
+      #     driver: "org.postgresql.Driver"
+      #     secret_scope: "jdbc-scope-jeremi"
+      #     secret_key_user: "db-username"
+      #     secret_key_password: "db-password"
+      #     ssl_mode: "require"
+      # # OPTIONAL PARAMETER
+      #     fetchsize: "10000"
+      #     partitionColumn: "CFCIF"
+      #     lowerBound: "1"
+      #     upperBound: "1000000"
+      #     numPartitions: "8"      
+
+      ## Config S3
+      s3:
+        s3_path: "s3://sandbox-dbx/dbx-pipeline-integration/raw/cfconn/"
+        read_options:
+          cloudFiles.format: "csv"
+          header: "true"
+          delimiter: ","
+          cloudFiles.inferColumnTypes: "false"
+          cloudFiles.schemaEvolutionMode: "addNewColumns"
+          cloudFiles.schemaHints: "`CFCIF#` STRING"
+
+    silver:
+      primary_keys:
+        - "CFCIF"
+        - "CFZSEQ"
+      partition_columns: "CFVDT6"
+      incremental_columns: [CFVDT6]
+
+    columns:
+      - name: CFCIF
+        source: CFCIF#
+        type: string
+        cleansing:
+          trim: true
+          null_markers: [""]
+      - name: CFZSEQ
+        source: CFZSEQ
+        type: integer
+        cleansing:
+          trim: true
+          null_markers: [""]
+      - name: CFEADC
+        source: CFEADC
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEADD
+        source: CFEADD
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEAN1
+        source: CFEAN1
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEDEP
+        source: CFEDEP
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEJOB
+        source: CFEJOB
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEAI7
+        source: CFEAI7
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEAI6
+        source: CFEAI6
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEAR7
+        source: CFEAR7
+        type: string
+        cleansing:
+          trim: true
+      - name: CFEAR6
+        source: CFEAR6
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVUSR
+        source: CFVUSR
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVDT6
+        source: CFVDT6
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVDT7
+        source: CFVDT7
+        type: string
+        cleansing:
+          trim: true
+      - name: CFVTME
+        source: CFVTME
+        type: string
+        cleansing:
+          trim: true
+          
