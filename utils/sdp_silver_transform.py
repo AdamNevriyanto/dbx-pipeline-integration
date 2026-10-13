@@ -15,27 +15,56 @@ _TYPE_MAP = {
 def transform(df: DataFrame, table_cfg: dict) -> DataFrame:
     columns_cfg = table_cfg["columns"]
 
-    # RENAME KOLOM SOURCE ke KOLOM TARGET yang ada di YAML
+    df = rename_columns(df, columns_cfg)
+    df = apply_trim(df, columns_cfg)
+    df = apply_null_markers(df, columns_cfg)
+    df = apply_casting(df, columns_cfg)
+
+    return df
+
+# RENAME KOLOM SOURCE ke KOLOM TARGET yang ada di YAML
+def rename_columns(df: DataFrame, columns_cfg: list) -> DataFrame:
     for col in columns_cfg:
+        # source = col["source"]
+        # target = col["name"]
+
         if col["source"] != col["name"]:
             df = df.withColumnRenamed(col["source"], col["name"])
 
-    # APPLY NULL MARKERS, TRIM
+    return df
+
+# APPLY TRIMMING CLEANSING
+def apply_trim(df: DataFrame, columns_cfg: list) -> DataFrame:
     for col in columns_cfg:
         name = col["name"]
         cleansing = col.get("cleansing", {})
+        
         if name not in df.columns:
             continue
         if cleansing.get("trim"):
             df = df.withColumn(name, F.trim(F.col(name)))
+
+    return df        
+    
+# NULL MARKERS, HANDLING VALUE TO BE NULL
+def apply_null_markers(df: DataFrame, columns_cfg: list) -> DataFrame:    
+    for col in columns_cfg:
+        name = col["name"]
+        cleansing = col.get("cleansing", {})
         null_markers = cleansing.get("null_markers")
+
+        if name not in df.columns:
+            continue
+
         if null_markers:
             df = df.withColumn(
                 name,
                 F.when(F.col(name).isin(null_markers), None).otherwise(F.col(name)),
             )
+    return df
 
-    # CASTING TIPE DATA
+# CASTING TIPE DATA
+def apply_casting(df: DataFrame, columns_cfg: list) -> DataFrame: 
     for col in columns_cfg:
         name = col["name"]
         col_type = col["type"]
